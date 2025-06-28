@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <ProductName>ForgeSharp.Mapper</ProductName>
+    <PackageId>ForgeSharp.Mapper</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Connor McBrayne</Authors>
+    <Company>secretsurvivor</Company>
+    <Description>High-performance, type-safe, and extensible object mapping library for .NET</Description>
+    <RepositoryUrl>https://github.com/secretsurvivor/ForgeSharp.Mapper</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/secretsurvivor/ForgeSharp.Mapper</PackageProjectUrl>
+    <PackageTags>mapping forge forge-sharp mapper</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
+  </ItemGroup>
+
+</Project>
