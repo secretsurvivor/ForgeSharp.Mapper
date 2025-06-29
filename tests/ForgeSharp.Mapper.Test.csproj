@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ForgeSharp.Mapper\ForgeSharp.Mapper.csproj" />
+    <ProjectReference Include="..\src\ForgeSharp.Mapper.csproj" />
   </ItemGroup>
 
   <ItemGroup>
