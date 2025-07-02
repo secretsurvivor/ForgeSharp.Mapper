@@ -1,18 +1,53 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Runtime.CompilerServices;
+
+#if NET8_0_OR_GREATER
 using System.Collections.Frozen;
-using System.Runtime.CompilerServices;
+#else
+using System.Collections.Concurrent;
+#endif
 
 namespace ForgeSharp.Mapper;
 
 /// <summary>
+/// Defines the contract for a mapping service that can map objects between types.
+/// </summary>
+public interface IMapperService
+{
+    /// <summary>
+    /// Maps the source object to a new destination object of type <typeparamref name="TDestination"/>.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <returns>The mapped destination object.</returns>
+    public TDestination Map<TSource, TDestination>(TSource source) where TDestination : new();
+    /// <summary>
+    /// Maps the source object to the specified destination template object.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="template">The destination template object.</param>
+    /// <returns>The mapped destination object.</returns>
+    public TDestination Map<TSource, TDestination>(TSource source, TDestination template);
+}
+
+/// <summary>
 /// Provides mapping services for converting objects between types using registered mappers.
 /// </summary>
-public class MapperService : IMapperService
+public sealed class MapperService : IMapperService
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets the frozen dictionary of registered mappers.
     /// </summary>
     private FrozenDictionary<(Type, Type), IMapperLinker> Mappers { get; }
+#else
+    /// <summary>
+    /// Gets the dictionary of registered mappers.
+    /// </summary>
+    private ConcurrentDictionary<(Type, Type), IMapperLinker> Mappers { get; } = new();
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MapperService"/> class with the specified builder.
@@ -21,7 +56,15 @@ public class MapperService : IMapperService
     public MapperService(MapperBuilder builder)
     {
         builder.Service = this;
+#if NET8_0_OR_GREATER
         Mappers = builder.Compile().ToFrozenDictionary(x => x.GetTypes());
+#else
+        foreach (var linker in builder.Compile())
+        {
+            var types = linker.GetTypes();
+            Mappers.TryAdd(types, linker);
+        }
+#endif
     }
 
     /// <summary>
@@ -62,48 +105,21 @@ public class MapperService : IMapperService
 }
 
 /// <summary>
-/// Provides extension methods for registering the mapper service in the DI container.
+/// Provides extension methods for the <see cref="IMapperService"/> interface.
 /// </summary>
 public static class MapperServiceExtension
 {
     /// <summary>
-    /// Adds the mapper service and related services to the service collection.
+    /// Clones the specified object by mapping it to a new instance of the same type.
     /// </summary>
-    /// <typeparam name="TBuilder">The type of the mapper builder.</typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The updated service collection.</returns>
-    public static IServiceCollection AddMapper<TBuilder>(this IServiceCollection services) where TBuilder : MapperBuilder
+    /// <typeparam name="TClone">The type to clone.</typeparam>
+    /// <param name="service">The mapper service instance.</param>
+    /// <param name="source">The source object to clone.</param>
+    /// <returns>A new instance of <typeparamref name="TClone"/> with copied values.</returns>
+    public static TClone Clone<TClone>(this IMapperService service, TClone source) where TClone : new()
     {
-        services.AddTransient<MapperBuilder, TBuilder>();
-        services.AddSingleton<IMapperService, MapperService>();
-        services.AddTransient<IMapperTester, MapperTester>();
-
-        return services;
+        return service.Map(source, new TClone());
     }
-}
-
-/// <summary>
-/// Defines the contract for a mapping service that can map objects between types.
-/// </summary>
-public interface IMapperService
-{
-    /// <summary>
-    /// Maps the source object to a new destination object of type <typeparamref name="TDestination"/>.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <returns>The mapped destination object.</returns>
-    public TDestination Map<TSource, TDestination>(TSource source) where TDestination : new();
-    /// <summary>
-    /// Maps the source object to the specified destination template object.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <param name="template">The destination template object.</param>
-    /// <returns>The mapped destination object.</returns>
-    public TDestination Map<TSource, TDestination>(TSource source, TDestination template);
 }
 
 /// <summary>
@@ -170,6 +186,34 @@ public abstract class MapperBuilder
 }
 
 /// <summary>
+/// Provides extension methods for the <see cref="MapperBuilder"/> class.
+/// </summary>
+public static class MapperBuilderExtension
+{
+    /// <summary>
+    /// Builds a new <see cref="MapperService"/> instance from the specified builder.
+    /// </summary>
+    /// <param name="builder">The mapper builder.</param>
+    /// <returns>A new <see cref="MapperService"/> instance.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IMapperService BuildService(this MapperBuilder builder)
+    {
+        return new MapperService(builder);
+    }
+
+    /// <summary>
+    /// Builds a new <see cref="MapperTester"/> instance from the specified builder.
+    /// </summary>
+    /// <param name="builder">The mapper builder.</param>
+    /// <returns>A new <see cref="MapperTester"/> instance.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IMapperTester BuildTester(this MapperBuilder builder)
+    {
+        return new MapperTester(builder);
+    }
+}
+
+/// <summary>
 /// Defines the contract for a mapper linker that provides type information.
 /// </summary>
 public interface IMapperLinker
@@ -187,7 +231,7 @@ public interface IMapperLinker
 /// <typeparam name="TSource">The source type.</typeparam>
 /// <typeparam name="TDestination">The destination type.</typeparam>
 /// <param name="mapperDelegate">The mapping delegate.</param>
-public class MapperLinker<TSource, TDestination>(MapperDelegate<TSource, TDestination> mapperDelegate) : IMapperLinker
+public sealed class MapperLinker<TSource, TDestination>(MapperDelegate<TSource, TDestination> mapperDelegate) : IMapperLinker
 {
     /// <summary>
     /// Gets the source and destination types for the mapper.
@@ -229,5 +273,18 @@ public static class MapperLinkerExtension
     public static TDestination Map<TSource, TDestination>(this MapperLinker<TSource, TDestination> linker, TSource source) where TDestination : new()
     {
         return linker.Map(source, new TDestination());
+    }
+
+    /// <summary>
+    /// Clones the specified object by mapping it to a new instance of the same type using the linker.
+    /// </summary>
+    /// <typeparam name="TClone">The type to clone.</typeparam>
+    /// <param name="linker">The mapper linker.</param>
+    /// <param name="source">The source object to clone.</param>
+    /// <returns>A new instance of <typeparamref name="TClone"/> with copied values.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TClone Clone<TClone>(this MapperLinker<TClone, TClone> linker, TClone source) where TClone : new()
+    {
+        return linker.Map(source, new TClone());
     }
 }

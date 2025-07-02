@@ -18,8 +18,9 @@ public static class CloneExtension
     /// This method uses reflection to enumerate all properties of <typeparamref name="T"/> that are both readable and writable,
     /// and adds assignments for each property to the mapping configuration.
     /// </remarks>
-    /// <exception cref="RequiresUnreferencedCodeAttribute">Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.</exception>
+#if NET5_0_OR_GREATER
     [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
     public static IMapperRegister<T, T> UseReflectionToClone<T>(this IMapperRegister<T, T> register)
     {
         var sourceParameter = Expression.Parameter(typeof(T), "source");

@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\dependencyInjection\ForgeSharp.Mapper.DependencyInjection.csproj" />
     <ProjectReference Include="..\src\ForgeSharp.Mapper.csproj" />
   </ItemGroup>
 

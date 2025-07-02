@@ -5,3 +5,7 @@
 /tests/obj
 /obj
 /src/nupkg
+/benchmark/bin
+/benchmark/obj
+/dependencyInjection/bin
+/dependencyInjection/obj

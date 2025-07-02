@@ -1,8 +1,11 @@
-﻿using System.Collections.Frozen;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 
 namespace ForgeSharp.Mapper;
 
@@ -29,7 +32,7 @@ public static class MapperRegistry
 /// </summary>
 /// <typeparam name="TSource">The source type.</typeparam>
 /// <typeparam name="TDestination">The destination type.</typeparam>
-public class MapperRegistry<TSource, TDestination> : IMapperRegister<TSource, TDestination>
+public sealed class MapperRegistry<TSource, TDestination> : IMapperRegister<TSource, TDestination>
 {
     private readonly LinkedList<IMapperEntry> _entries = new LinkedList<IMapperEntry>();
 
@@ -92,10 +95,16 @@ public class MapperRegistry<TSource, TDestination> : IMapperRegister<TSource, TD
     /// Returns the properties on the destination type that are not mapped.
     /// </summary>
     /// <returns>An enumerable of missing <see cref="PropertyInfo"/> objects.</returns>
-    [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#if NET5_0_OR_GREATER
+    [RequiresUnreferencedCode("Uses reflection to examine properties. This may break when trimming or using Native AOT.")]
+#endif
     public IEnumerable<PropertyInfo> MissingProperties()
     {
+#if NET8_0_OR_GREATER
         var entries = _entries.ToFrozenDictionary(x => x.TargetMember.Name, x => x.TargetMember);
+#else
+        var entries = _entries.ToDictionary(x => x.TargetMember.Name, x => x.TargetMember);   
+#endif
 
         foreach (var property in typeof(TDestination).GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
@@ -194,6 +203,12 @@ public class MapperRegistry<TSource, TDestination> : IMapperRegister<TSource, TD
 
         return member;
     }
+
+    void IMapperRegister.GetTypes(out Type sourceType, out Type destinationType)
+    {
+        sourceType = typeof(TSource);
+        destinationType = typeof(TDestination);
+    }
 }
 
 /// <summary>
@@ -217,7 +232,9 @@ public interface IMapperRegister
     /// Returns the properties on the destination type that are not mapped.
     /// </summary>
     /// <returns>An enumerable of missing <see cref="PropertyInfo"/> objects.</returns>
+#if NET5_0_OR_GREATER
     [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
     public IEnumerable<PropertyInfo> MissingProperties();
 
     /// <summary>
@@ -254,12 +271,6 @@ public interface IMapperRegister<TSource, TDestination> : IMapperRegister
     /// </summary>
     /// <returns>A <see cref="MapperLinker{TSource, TDestination}"/> instance.</returns>
     public MapperLinker<TSource, TDestination> Compile();
-
-    void IMapperRegister.GetTypes(out Type sourceType, out Type destinationType)
-    {
-        sourceType = typeof(TSource);
-        destinationType = typeof(TDestination);
-    }
 }
 
 /// <summary>

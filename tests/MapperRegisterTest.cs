@@ -1,5 +1,6 @@
 #nullable disable
 
+using ForgeSharp.Mapper.DependencyInjection;
 using ForgeSharp.Mapper.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -200,7 +201,7 @@ public class MapperRegisterTest
             x.UseReflectionToClone();
         });
 
-        var result = registry.Map(new TestClass2 { TestString = "Hello World", TestNumber = 123 });
+        var result = registry.Clone(new TestClass2 { TestString = "Hello World", TestNumber = 123 });
 
         Assert.Equal("Hello World", result.TestString);
         Assert.Equal(123, result.TestNumber);

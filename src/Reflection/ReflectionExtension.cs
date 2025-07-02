@@ -20,7 +20,9 @@ public static class ReflectionExtension
     /// <param name="setter">The setter expression for the value to assign.</param>
     /// <returns>The mapper register for further configuration.</returns>
     /// <exception cref="ArgumentException">Thrown if the setter return type does not match the member type or if the member type is not supported.</exception>
+#if NET5_0_OR_GREATER
     [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
     public static IMapperRegister<TSource, TDestination> AddAssignment<TSource, TDestination>(this IMapperRegister<TSource, TDestination> register, MemberInfo member, LambdaExpression setter)
     {
         var destinationParameter = Expression.Parameter(typeof(TDestination), "destination");
@@ -43,7 +45,9 @@ public static class ReflectionExtension
         return register;
     }
 
+#if NET5_0_OR_GREATER
     [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
     private static void AddAssignment<TSource, TDestination>(Type valueType, IMapperRegister register, Expression member, Expression setter)
     {
         var linker = MapperLinkReflection.Create(typeof(TSource), typeof(TDestination), valueType, register);
@@ -71,7 +75,9 @@ public static class ReflectionExtension
         /// <param name="valueType">The value type.</param>
         /// <param name="register">The mapper register.</param>
         /// <returns>A reflection linker instance.</returns>
+#if NET5_0_OR_GREATER
         [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IReflectionLinker Create(Type sourceType, Type destinationType, Type valueType, IMapperRegister register)
         {
@@ -109,7 +115,6 @@ public static class ReflectionExtension
             if (setter is Expression<Func<TSource, TDestination, TValue>> setterDestinationLambda)
             {
                 _target.To(memberLambda).From(setterDestinationLambda);
-                return this;
             }
             else if (setter is Expression<Func<TSource, TValue>> setterLambda)
             {

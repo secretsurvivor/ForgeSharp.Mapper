@@ -8,13 +8,15 @@ namespace ForgeSharp.Mapper;
 /// <summary>
 /// Provides functionality to test and validate registered mappers for missing property mappings.
 /// </summary>
-public class MapperTester(MapperBuilder builder) : IMapperTester
+public sealed class MapperTester(MapperBuilder builder) : IMapperTester
 {
     /// <summary>
     /// Validates all registered mappers and returns results for missing destination properties.
     /// </summary>
     /// <returns>An enumerable of <see cref="MapperValidationResult"/> for each mapping.</returns>
-    [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#if NET5_0_OR_GREATER
+    [RequiresUnreferencedCode("Uses reflection to examine properties. This may break when trimming or using Native AOT.")]
+#endif
     public IEnumerable<MapperValidationResult> ValidateMissingProperties()
     {
         foreach (var registry in builder.Registers)

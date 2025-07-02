@@ -18,7 +18,9 @@ public static class ConfigureExtension
     /// <returns>The mapper register for further configuration.</returns>
     /// <exception cref="ArgumentException">Thrown if the expression is not a valid member initialization or contains no bindings.</exception>
     /// <exception cref="NotSupportedException">Thrown if a binding type is not supported.</exception>
+#if NET5_0_OR_GREATER
     [RequiresUnreferencedCode("Uses reflection to construct mapping expressions at runtime. This may break when trimming or using Native AOT.")]
+#endif
     public static IMapperRegister<TSource, TDestination> Configure<TSource, TDestination>(this IMapperRegister<TSource, TDestination> register, Expression<Func<TSource, TDestination, TDestination>> expression)
     {
         var sourceParameter = Expression.Parameter(typeof(TSource), "source");
