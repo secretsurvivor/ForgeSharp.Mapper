@@ -121,6 +121,21 @@ register.AddAssignment(
 );
 ```
 
+### Context-aware Mapping
+ForgeSharpMapper supports context-aware mappers, allowing you to inject a custom context object into the mapping logic.
+```csharp
+public class MyContext(Guid currentUser)
+{
+    public Guid CurrentUser { get; set; } = currentUser;
+}
+```
+This context can then be injected into the mapping logic:
+```csharp
+RegisterWithContext<Source, MyContext, Destination>()
+    .To(d => d.UserId).From((s, ctx) => ctx.CurrentUser)
+    .To(d => d.Name).From(s => s.SourceName);>
+```
+
 ---
 
 ## API Overview

@@ -9,3 +9,4 @@
 /benchmark/obj
 /dependencyInjection/bin
 /dependencyInjection/obj
+/dependencyInjection/nupkg

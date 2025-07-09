@@ -21,9 +21,9 @@ public static class MapperRegistry
     /// <typeparam name="TDestination">The destination type.</typeparam>
     /// <returns>A new <see cref="IMapperRegister{TSource, TDestination}"/> instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IMapperRegister<TSource, TDestination> Create<TSource, TDestination>()
+    public static IMapperRegister<TSource, TDestination> Create<TSource, TDestination>(bool preferInterpretation = false)
     {
-        return new MapperRegistry<TSource, TDestination>();
+        return new MapperRegistry<TSource, TDestination>(preferInterpretation);
     }
 }
 
@@ -32,7 +32,7 @@ public static class MapperRegistry
 /// </summary>
 /// <typeparam name="TSource">The source type.</typeparam>
 /// <typeparam name="TDestination">The destination type.</typeparam>
-public sealed class MapperRegistry<TSource, TDestination> : IMapperRegister<TSource, TDestination>
+public sealed class MapperRegistry<TSource, TDestination>(bool preferInterpretation = false) : IMapperRegister<TSource, TDestination>
 {
     private readonly LinkedList<IMapperEntry> _entries = new LinkedList<IMapperEntry>();
 
@@ -68,7 +68,7 @@ public sealed class MapperRegistry<TSource, TDestination> : IMapperRegister<TSou
 
         var body = Expression.Block(assignmentList);
         
-        return Expression.Lambda<MapperDelegate<TSource, TDestination>>(body, sourceParameter, templateParameter).Compile();
+        return Expression.Lambda<MapperDelegate<TSource, TDestination>>(body, sourceParameter, templateParameter).Compile(preferInterpretation: preferInterpretation);
     }
 
     /// <summary>

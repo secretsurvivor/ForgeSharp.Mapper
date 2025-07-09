@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 namespace ForgeSharp.Mapper;
 
 /// <summary>
-/// Defines the contract for a mapping service that can map objects between types.
+/// Defines the contract for a mapping service that can map objects between types, including context-aware mappings.
 /// </summary>
 public interface IMapperService
 {
@@ -30,10 +30,31 @@ public interface IMapperService
     /// <param name="template">The destination template object.</param>
     /// <returns>The mapped destination object.</returns>
     public TDestination Map<TSource, TDestination>(TSource source, TDestination template);
+    /// <summary>
+    /// Maps the source object and context to a new destination object of type <typeparamref name="TDestination"/> using a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>The mapped destination object.</returns>
+    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new();
+    /// <summary>
+    /// Maps the source object and context to the specified destination template object using a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <param name="template">The destination template object.</param>
+    /// <returns>The mapped destination object.</returns>
+    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template);
 }
 
 /// <summary>
-/// Provides mapping services for converting objects between types using registered mappers.
+/// Provides mapping services for converting objects between types using registered mappers, including context-aware mappings.
 /// </summary>
 public sealed class MapperService : IMapperService
 {
@@ -42,11 +63,21 @@ public sealed class MapperService : IMapperService
     /// Gets the frozen dictionary of registered mappers.
     /// </summary>
     private FrozenDictionary<(Type, Type), IMapperLinker> Mappers { get; }
+
+    /// <summary>
+    /// Gets the frozen dictionary of registered context-aware mappers.
+    /// </summary>
+    private FrozenDictionary<(Type, Type, Type), IContextMapperLinker> ContextMappers { get; }
 #else
     /// <summary>
     /// Gets the dictionary of registered mappers.
     /// </summary>
     private ConcurrentDictionary<(Type, Type), IMapperLinker> Mappers { get; } = new();
+
+    /// <summary>
+    /// Gets the dictionary of registered context-aware mappers.
+    /// </summary>
+    private ConcurrentDictionary<(Type, Type, Type), IContextMapperLinker> ContextMappers { get; } = new();
 #endif
 
     /// <summary>
@@ -58,11 +89,18 @@ public sealed class MapperService : IMapperService
         builder.Service = this;
 #if NET8_0_OR_GREATER
         Mappers = builder.Compile().ToFrozenDictionary(x => x.GetTypes());
+        ContextMappers = builder.CompileContextMappers().ToFrozenDictionary(x => x.GetTypes());
 #else
         foreach (var linker in builder.Compile())
         {
             var types = linker.GetTypes();
             Mappers.TryAdd(types, linker);
+        }
+
+        foreach (var linker in builder.CompileContextMappers())
+        {
+            var types = linker.GetTypes();
+            ContextMappers.TryAdd(types, linker);
         }
 #endif
     }
@@ -102,6 +140,46 @@ public sealed class MapperService : IMapperService
 
         return linker.Map(source, template);
     }
+
+    /// <summary>
+    /// Maps the source object and context to a new destination object of type <typeparamref name="TDestination"/> using a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>The mapped destination object.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new()
+    {
+        return MapAndInject(source, context, new TDestination());
+    }
+
+    /// <summary>
+    /// Maps the source object and context to the specified destination template object using a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <param name="template">The destination template object.</param>
+    /// <returns>The mapped destination object.</returns>
+    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template)
+    {
+        if (!ContextMappers.TryGetValue((typeof(TSource), typeof(TContext), typeof(TDestination)), out var contextMapperLinker))
+        {
+            throw new ArgumentException($"Missing context mapper registry from '{typeof(TSource).Name}' with context '{typeof(TContext).Name}' to '{typeof(TDestination).Name}'");
+        }
+
+        if (contextMapperLinker is not ContextMapperLinker<TSource, TContext, TDestination> contextLinker)
+        {
+            throw new InvalidCastException($"ContextMapperLinker type mismatch for '{typeof(TSource)}' with context '{typeof(TContext)}' → '{typeof(TDestination)}'");
+        }
+
+        return contextLinker.MapAndInject(source, context, template);
+    }
 }
 
 /// <summary>
@@ -128,11 +206,17 @@ public static class MapperServiceExtension
 public abstract class MapperBuilder
 {
     private readonly List<IMapperRegister> _registers = [];
+    private readonly List<IContextMapperRegister> _contextRegisters = [];
 
     /// <summary>
     /// Gets the list of registered mappers.
     /// </summary>
     public IReadOnlyList<IMapperRegister> Registers => _registers.AsReadOnly();
+
+    /// <summary>
+    /// Gets the list of registered context-aware mappers.
+    /// </summary>
+    public IReadOnlyList<IContextMapperRegister> ContextRegisters => _contextRegisters.AsReadOnly();
 
     // Needs to not be nullable so we can later inject the service into
     // the builder
@@ -143,11 +227,26 @@ public abstract class MapperBuilder
     /// </summary>
     /// <typeparam name="TSource">The source type.</typeparam>
     /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="preferInterpretation">Indicates whether to prefer interpretation for the mapping.</param>
     /// <returns>The mapper register for further configuration.</returns>
-    protected IMapperRegister<TSource, TDestination> Register<TSource, TDestination>()
+    protected IMapperRegister<TSource, TDestination> Register<TSource, TDestination>(bool preferInterpretation = false)
     {
-        var newRegister = new MapperRegistry<TSource, TDestination>();
+        var newRegister = new MapperRegistry<TSource, TDestination>(preferInterpretation);
         _registers.Add(newRegister);
+        return newRegister;
+    }
+
+    /// <summary>
+    /// Registers a new context-aware mapper for the specified source, context, and destination types.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <returns>The context-aware mapper register for further configuration.</returns>
+    protected IContextMapperRegister<TSource, TContext, TDestination> RegisterWithContext<TSource, TContext, TDestination>()
+    {
+        var newRegister = new ContextMapperRegistry<TSource, TContext, TDestination>();
+        _contextRegisters.Add(newRegister);
         return newRegister;
     }
 
@@ -179,6 +278,18 @@ public abstract class MapperBuilder
     public IEnumerable<IMapperLinker> Compile()
     {
         foreach (var register in _registers)
+        {
+            yield return register.CompileInternal_();
+        }
+    }
+
+    /// <summary>
+    /// Compiles all registered context-aware mappers and returns the linker objects.
+    /// </summary>
+    /// <returns>An enumerable of linker objects for the registered context-aware mappers.</returns>
+    public IEnumerable<IContextMapperLinker> CompileContextMappers()
+    {
+        foreach (var register in _contextRegisters)
         {
             yield return register.CompileInternal_();
         }

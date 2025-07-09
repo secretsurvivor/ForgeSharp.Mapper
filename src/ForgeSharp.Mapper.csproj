@@ -9,7 +9,7 @@
     
     <ProductName>ForgeSharp.Mapper</ProductName>
     <PackageId>ForgeSharp.Mapper</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Connor McBrayne</Authors>
     <Company>secretsurvivor</Company>
     <Description>High-performance, type-safe, and extensible object mapping library for .NET</Description>
@@ -17,7 +17,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/secretsurvivor/ForgeSharp.Mapper</PackageProjectUrl>
-    <PackageTags>mapping;mapper;AOT;lightweight</PackageTags>
+    <PackageTags>mapping;mapper;lightweight;high-performance;object-mapping;fluent;fluent-api;forgesharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
