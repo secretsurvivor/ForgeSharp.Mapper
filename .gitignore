@@ -10,3 +10,4 @@
 /dependencyInjection/bin
 /dependencyInjection/obj
 /dependencyInjection/nupkg
+src/pack-NuGet.bat

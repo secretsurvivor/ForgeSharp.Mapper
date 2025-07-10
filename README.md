@@ -19,7 +19,7 @@ The library is designed for speed, maintainability, and ease of integration with
 - **Dependency Injection Ready:**  
   Seamless integration with Microsoft.Extensions.DependencyInjection with the `ForgeSharp.Mapper.DependencyInjection` NuGet.
 - **Advanced Scenarios:**  
-  Supports custom mapping logic, property transformations, and cloning.
+  Supports custom mapping logic, context-aware mapping, property transformations, and cloning.
 
 ---
 
@@ -65,7 +65,9 @@ dotnet add package ForgeSharp.Mapper.DependencyInjection
 
 ## Quick Start
 
-### 1. Define a Mapper Builder
+This mapping solution can be used in two ways: with Dependency Injection or without it.
+
+### Define a Mapper Builder
 
 ```csharp
 public class MyMapperBuilder : MapperBuilder
@@ -79,13 +81,26 @@ public class MyMapperBuilder : MapperBuilder
 }
 ```
 
-### 2. Register the Mapper in DI
+### Without Dependency Injection
+
+Without Dependency Injection, you can create the IMapperService directly from the builder:
+
+```csharp
+var mapper = new MyMapperBuilder().BuildService();
+mapper.Map<Source, Destination>(sourceObject);
+```
+
+### With Dependency Injection
+
+This requires the `ForgeSharp.Mapper.DependencyInjection` NuGet package.
+
+#### 1. Register the Mapper in DI
 
 ```csharp
 services.AddMapper<MyMapperBuilder>();
 ```
 
-### 3. Use the Mapper
+#### 2. Use the Mapper
 
 ```csharp
 var mapper = serviceProvider.GetRequiredService<IMapperService>();
