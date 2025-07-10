@@ -9,7 +9,7 @@
     
     <ProductName>ForgeSharp.Mapper</ProductName>
     <PackageId>ForgeSharp.Mapper</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Authors>Connor McBrayne</Authors>
     <Company>secretsurvivor</Company>
     <Description>High-performance, type-safe, and extensible object mapping library for .NET</Description>

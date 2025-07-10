@@ -20,7 +20,8 @@ public interface IMapperService
     /// <typeparam name="TDestination">The destination type.</typeparam>
     /// <param name="source">The source object.</param>
     /// <returns>The mapped destination object.</returns>
-    public TDestination Map<TSource, TDestination>(TSource source) where TDestination : new();
+    TDestination Map<TSource, TDestination>(TSource source) where TDestination : new();
+
     /// <summary>
     /// Maps the source object to the specified destination template object.
     /// </summary>
@@ -29,7 +30,8 @@ public interface IMapperService
     /// <param name="source">The source object.</param>
     /// <param name="template">The destination template object.</param>
     /// <returns>The mapped destination object.</returns>
-    public TDestination Map<TSource, TDestination>(TSource source, TDestination template);
+    TDestination Map<TSource, TDestination>(TSource source, TDestination template);
+
     /// <summary>
     /// Maps the source object and context to a new destination object of type <typeparamref name="TDestination"/> using a context-aware mapping.
     /// </summary>
@@ -39,7 +41,8 @@ public interface IMapperService
     /// <param name="source">The source object.</param>
     /// <param name="context">The context object.</param>
     /// <returns>The mapped destination object.</returns>
-    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new();
+    TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new();
+
     /// <summary>
     /// Maps the source object and context to the specified destination template object using a context-aware mapping.
     /// </summary>
@@ -50,7 +53,7 @@ public interface IMapperService
     /// <param name="context">The context object.</param>
     /// <param name="template">The destination template object.</param>
     /// <returns>The mapped destination object.</returns>
-    public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template);
+    TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template);
 }
 
 /// <summary>
@@ -105,27 +108,14 @@ public sealed class MapperService : IMapperService
 #endif
     }
 
-    /// <summary>
-    /// Maps the source object to a new destination object of type <typeparamref name="TDestination"/>.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <returns>The mapped destination object.</returns>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TDestination Map<TSource, TDestination>(TSource source) where TDestination : new()
     {
         return Map(source, new TDestination());
     }
 
-    /// <summary>
-    /// Maps the source object to the specified destination template object.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <param name="template">The destination template object.</param>
-    /// <returns>The mapped destination object.</returns>
+    /// <inheritdoc/>
     public TDestination Map<TSource, TDestination>(TSource source, TDestination template)
     {
         if (!Mappers.TryGetValue((typeof(TSource), typeof(TDestination)), out var mapperLinker))
@@ -141,31 +131,14 @@ public sealed class MapperService : IMapperService
         return linker.Map(source, template);
     }
 
-    /// <summary>
-    /// Maps the source object and context to a new destination object of type <typeparamref name="TDestination"/> using a context-aware mapping.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TContext">The context type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <param name="context">The context object.</param>
-    /// <returns>The mapped destination object.</returns>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new()
     {
         return MapAndInject(source, context, new TDestination());
     }
 
-    /// <summary>
-    /// Maps the source object and context to the specified destination template object using a context-aware mapping.
-    /// </summary>
-    /// <typeparam name="TSource">The source type.</typeparam>
-    /// <typeparam name="TContext">The context type.</typeparam>
-    /// <typeparam name="TDestination">The destination type.</typeparam>
-    /// <param name="source">The source object.</param>
-    /// <param name="context">The context object.</param>
-    /// <param name="template">The destination template object.</param>
-    /// <returns>The mapped destination object.</returns>
+    /// <inheritdoc/>
     public TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template)
     {
         if (!ContextMappers.TryGetValue((typeof(TSource), typeof(TContext), typeof(TDestination)), out var contextMapperLinker))
@@ -272,6 +245,31 @@ public abstract class MapperBuilder
     protected TDestination Map<TSource, TDestination>(TSource source, TDestination template) => Service!.Map(source, template);
 
     /// <summary>
+    /// Maps the source object and context to a new destination object of type <typeparamref name="TDestination"/> using the registered service and a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>The mapped destination object.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context) where TDestination : new() => Service!.MapAndInject<TSource, TContext, TDestination>(source, context);
+
+    /// <summary>
+    /// Maps the source object and context to the specified destination template object using the registered service and a context-aware mapping.
+    /// </summary>
+    /// <typeparam name="TSource">The source type.</typeparam>
+    /// <typeparam name="TContext">The context type.</typeparam>
+    /// <typeparam name="TDestination">The destination type.</typeparam>
+    /// <param name="source">The source object.</param>
+    /// <param name="context">The context object.</param>
+    /// <param name="template">The destination template object.</param>
+    /// <returns>The mapped destination object.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected TDestination MapAndInject<TSource, TContext, TDestination>(TSource source, TContext context, TDestination template) => Service!.MapAndInject(source, context, template);
+
+    /// <summary>
     /// Compiles all registered mappers and returns the linker objects.
     /// </summary>
     /// <returns>An enumerable of linker objects for the registered mappers.</returns>
@@ -333,7 +331,7 @@ public interface IMapperLinker
     /// Gets the source and destination types for the mapper.
     /// </summary>
     /// <returns>A tuple containing the source and destination types.</returns>
-    public (Type sourceType, Type destinationType) GetTypes();
+    (Type sourceType, Type destinationType) GetTypes();
 }
 
 /// <summary>

@@ -1,5 +1,7 @@
 ﻿#nullable disable
 
+using ForgeSharp.Mapper.Reflection;
+
 namespace ForgeSharp.Mapper.Test
 {
     public class ContextMapperRegisterTest
@@ -53,6 +55,25 @@ namespace ForgeSharp.Mapper.Test
             {
                 x.To(dest => dest.TestNumber).From((src, context) => context.Parseint(src.TestString, -1));
                 x.To(dest => dest.TestString).From((src, context) => context.GetString());
+            });
+
+            var context = new TestContext("Test String");
+            var result = registry.MapAndInject(new TestClass1 { TestString = "123", TestNumber = 456 }, context);
+
+            Assert.Equal("Test String", result.TestString);
+            Assert.Equal(123, result.TestNumber);
+        }
+
+        [Fact]
+        public void CanMapWithConfigure()
+        {
+            var registry = CreateMapper<TestClass1, TestContext, TestClass2>(x =>
+            {
+                x.Configure((src, ctx, dest) => new TestClass2
+                {
+                    TestNumber = ctx.Parseint(src.TestString, -1),
+                    TestString = ctx.GetString()
+                });
             });
 
             var context = new TestContext("Test String");

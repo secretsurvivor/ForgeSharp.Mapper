@@ -11,7 +11,7 @@ The library is designed for speed, maintainability, and ease of integration with
 - **Fluent, Type-Safe API:**  
   Define mappings using expressive, chainable syntax with full compile-time safety.
 - **Reflection-Free Runtime Mapping:**  
-  Mappings are compiled to delegates for maximum performance and Native AOT.
+  Mappings are compiled to delegates for maximum performance.
 - **Extensible Builder Pattern:**  
   Easily register and configure mappings for any type combination.
 - **Validation Tools:**  
@@ -96,6 +96,31 @@ var destination = mapper.Map<Source, Destination>(sourceObject);
 
 ## Advanced Usage
 
+### Configure Extension (Recommended)
+The `Configure` extension method allows you to define complex mappings in a single, expressive member-initializer expression. This makes your mapping configuration more readable and maintainable, especially for larger objects.
+```csharp
+Register<Source, Destination>()
+    .Configure((src, dest) => new Destination
+    {
+        Name = src.SourceName,
+        Age = src.Years + 1,
+        IsActive = true
+    });
+```
+
+You can also use `Configure` for context-aware mappings:
+```csharp
+RegisterWithContext<Source, MyContext, Destination>()
+    .Configure((src, ctx, dest) => new Destination
+    {
+        Name = src.SourceName,
+        UserId = ctx.CurrentUser,
+        IsActive = true
+    });
+```
+
+This just uses reflection to handle the fluent API, but the actual mapping is still compiled to delegates for performance.
+
 ### Cloning
 
 ```csharp
@@ -133,7 +158,7 @@ This context can then be injected into the mapping logic:
 ```csharp
 RegisterWithContext<Source, MyContext, Destination>()
     .To(d => d.UserId).From((s, ctx) => ctx.CurrentUser)
-    .To(d => d.Name).From(s => s.SourceName);>
+    .To(d => d.Name).From(s => s.SourceName);
 ```
 
 ---
