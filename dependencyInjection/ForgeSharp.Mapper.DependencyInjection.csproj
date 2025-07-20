@@ -12,6 +12,7 @@
     <Version>1.0.1</Version>
     <Authors>Connor McBrayne</Authors>
     <Company>secretsurvivor</Company>
+    <Description>Dependancy Injection extension for ForgeSharp.Mapper</Description>
     <RepositoryUrl>https://github.com/secretsurvivor/ForgeSharp.Mapper</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
