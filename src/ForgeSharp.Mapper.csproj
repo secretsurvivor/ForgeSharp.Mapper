@@ -6,7 +6,8 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    
+
+    <IsPackable>true</IsPackable>
     <ProductName>ForgeSharp.Mapper</ProductName>
     <PackageId>ForgeSharp.Mapper</PackageId>
     <Version>1.2.1</Version>

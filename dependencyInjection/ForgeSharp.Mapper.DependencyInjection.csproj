@@ -9,7 +9,7 @@
 
     <ProductName>ForgeSharp.Mapper.DependencyInjection</ProductName>
     <PackageId>ForgeSharp.Mapper.DependencyInjection</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Connor McBrayne</Authors>
     <Company>secretsurvivor</Company>
     <RepositoryUrl>https://github.com/secretsurvivor/ForgeSharp.Mapper</RepositoryUrl>
@@ -18,12 +18,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ForgeSharp.Mapper" Version="1.1.0" />
     <!-- I've referenced a lower version of DependencyInjection so that it can have the highest compatibility -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\src\ForgeSharp.Mapper.csproj" />
   </ItemGroup>
 
 </Project>
