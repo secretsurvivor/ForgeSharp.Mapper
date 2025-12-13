@@ -224,6 +224,16 @@ public abstract class MapperBuilder
     }
 
     /// <summary>
+    /// Imports all registered mappers and context-aware mappers from another <see cref="MapperBuilder"/> instance.
+    /// </summary>
+    /// <param name="other">The other <see cref="MapperBuilder"/> instance to import from.</param>
+    protected void ImportFrom(MapperBuilder other)
+    {
+        _registers.AddRange(other._registers);
+        _contextRegisters.AddRange(other._contextRegisters);
+    }
+
+    /// <summary>
     /// Maps the source object to a new destination object of type <typeparamref name="TDestination"/> using the registered service.
     /// </summary>
     /// <typeparam name="TSource">The source type.</typeparam>
