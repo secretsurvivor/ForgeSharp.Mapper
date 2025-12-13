@@ -199,7 +199,7 @@ RegisterWithContext<Source, MyContext, Destination>()
 
 ## Requirements
 
-- .NET 8.0 or later
+- .NET 2.0 or later
 
 ---
 
