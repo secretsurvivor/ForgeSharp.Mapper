@@ -234,6 +234,15 @@ public abstract class MapperBuilder
     }
 
     /// <summary>
+    /// Imports all registered mappers and context-aware mappers from another <see cref="MapperBuilder"/> instance of the specified type.
+    /// </summary>
+    /// <typeparam name="TBuilder">The type of the <see cref="MapperBuilder"/> to import from. Must have a parameterless constructor.</typeparam>
+    protected void ImportFrom<TBuilder>() where TBuilder : MapperBuilder, new()
+    {
+        ImportFrom(new TBuilder());
+    }
+
+    /// <summary>
     /// Maps the source object to a new destination object of type <typeparamref name="TDestination"/> using the registered service.
     /// </summary>
     /// <typeparam name="TSource">The source type.</typeparam>
